@@ -564,7 +564,7 @@ where
 {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (inner, scale) = I::try_from_str_only(s)?;
+        let (inner, scale) = I::try_from_str_only(s, None)?;
         Ok(OobFmt(OobScaleFpdec(inner), scale))
     }
 }

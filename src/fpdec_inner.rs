@@ -130,7 +130,7 @@ pub trait FpdecInner:
     where
         Self: Num<FromStrRadixErr = ParseIntError>,
     {
-        let (num, raw_scale) = Self::try_from_str_only(s)?;
+        let (num, raw_scale) = Self::try_from_str_only(s, Some(scale))?;
         if num.is_zero() {
             Ok(num)
         } else if raw_scale == scale {
@@ -146,7 +146,7 @@ pub trait FpdecInner:
     }
 
     // Guess and return the scale by the input string.
-    fn try_from_str_only(s: &str) -> Result<(Self, i32), ParseError>
+    fn try_from_str_only(s: &str, max_scale: Option<i32>) -> Result<(Self, i32), ParseError>
     where
         Self: Num<FromStrRadixErr = ParseIntError>,
     {
@@ -155,6 +155,16 @@ pub trait FpdecInner:
         }
 
         if let Some((int_str, frac_str)) = s.split_once('.') {
+            let frac_str = if let Some(max_scale) = max_scale {
+                if max_scale > 0 {
+                    &frac_str[0..max_scale as usize]
+                } else {
+                    frac_str
+                }
+            } else {
+                frac_str
+            };
+
             let int_num = Self::from_str_radix(int_str, 10)?;
 
             let frac_num = if s.as_bytes()[0] == b'-' {
@@ -276,6 +286,7 @@ mod tests {
     use super::*;
     extern crate std;
     use std::fmt;
+    use std::string::ParseError;
 
     struct TestFmt<I> {
         n: I,
